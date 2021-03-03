@@ -27,6 +27,7 @@ Enquiries about further applications and development opportunities are welcome.
 #include "utils/block.h"
 #include "utils/constants.h"
 #include "utils/aes.h"
+#include "utils/vaes.h"
 #include <stdio.h>
 /** @addtogroup BP
   @{
@@ -52,11 +53,11 @@ class PRP { public:
 	}
 
 	void permute_block(block128 *data, int nblocks) {
-		int i = 0;
-		for(; i < nblocks-AES_BATCH_SIZE; i+=AES_BATCH_SIZE) {
-			AES_ecb_encrypt_blks(data+i, AES_BATCH_SIZE, &aes);
-		}
-		AES_ecb_encrypt_blks(data+i, (AES_BATCH_SIZE >  nblocks-i) ? nblocks-i:AES_BATCH_SIZE, &aes);
+		int remainder = nblocks % AES_BATCH_SIZE;
+		int main_bulk = nblocks - remainder;
+		if (main_bulk > 0)
+			VAES_ecb_encrypt_blks<10, 32>(data, main_bulk, aes.rd_key);
+		AES_ecb_encrypt_blks(data+ main_bulk, remainder, &aes);
 	}
 
 	void permute_data(void*data, int nbytes) {

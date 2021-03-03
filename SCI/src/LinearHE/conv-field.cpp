@@ -578,7 +578,7 @@ void ConvField::non_strided_conv(
         Image* image,
         Filters* filters,
         vector<vector<vector<uint64_t>>>& outArr,
-        bool verbose = false)
+        bool verbose)// = false)
 {
     data.image_h = H;
     data.image_w = W;
@@ -748,8 +748,8 @@ void ConvField::convolution(
         vector<vector<vector<vector<uint64_t>>>>& inputArr,
         vector<vector<vector<vector<uint64_t>>>>& filterArr,
         vector<vector<vector<vector<uint64_t>>>>& outArr,
-        bool verify_output = false,
-        bool verbose = false)
+        bool verify_output,// = false,
+        bool verbose)// = false)
 {
     int paddedH = H+zPadHLeft+zPadHRight;
     int paddedW = W+zPadWLeft+zPadWRight;

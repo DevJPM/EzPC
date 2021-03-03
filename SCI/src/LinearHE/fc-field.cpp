@@ -225,8 +225,8 @@ void FCField::matrix_multiplication(
         vector<vector<uint64_t>>& A,
         vector<vector<uint64_t>>& B,
         vector<vector<uint64_t>>& C,
-        bool verify_output = false,
-        bool verbose = false)
+        bool verify_output,// = false,
+        bool verbose)// = false)
 {
     assert(num_cols == 1);
     data.filter_h = num_rows;

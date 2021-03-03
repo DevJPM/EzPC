@@ -56,8 +56,8 @@ void ElemWiseProdField::elemwise_product(
         vector<uint64_t>& inArr,
         vector<uint64_t>& multArr,
         vector<uint64_t>& outputArr,
-        bool verify_output = false,
-        bool verbose = false)
+        bool verify_output, //= false,
+        bool verbose)// = false)
 {
     int num_ct = ceil(float(size)/slot_count);
 

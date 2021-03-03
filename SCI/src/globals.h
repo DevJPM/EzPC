@@ -26,6 +26,7 @@ SOFTWARE.
 #include <chrono>  //Keep the local repo based headers below, once constants are defined
 #include <thread>
 #include <map>
+#include <string>
 
 // #define NDEBUG //This must come first -- so that this marco is used throughout code
 			   	 //Defining this will disable all asserts throughout code

@@ -30,6 +30,7 @@ Modified by Deevashwer Rathee
 #include "utils/block.h"
 #include "utils/aes.h"
 #include "utils/aes-ni.h"
+#include "utils/vaes.h"
 #include "utils/constants.h"
 #include <gmp.h>
 #include <random>
@@ -103,28 +104,44 @@ class PRG128 { public:
 	}
 
 	void random_block(block128 * data, int nblocks=1) {
-		for (int i = 0; i < nblocks; ++i) {
+		int remainder = nblocks % 32;
+		//int remainder = nblocks % AES_BATCH_SIZE;
+		int main_bulk = nblocks - remainder;
+		uint64_t counter_backup = counter;
+		counter += main_bulk;
+		//for (int i = 0; i < nblocks; ++i) {
+		for (int i = main_bulk; i < nblocks; ++i) {
 			data[i] = makeBlock128(0LL, counter++);
 		}
-		int i = 0;
+		/*int i = 0;
 		for(; i < nblocks-AES_BATCH_SIZE; i+=AES_BATCH_SIZE) {
 			AES_ecb_encrypt_blks(data+i, AES_BATCH_SIZE, &aes);
-		}
-		AES_ecb_encrypt_blks(data+i, (AES_BATCH_SIZE >  nblocks-i) ? nblocks-i:AES_BATCH_SIZE, &aes);
+		}*/
+		if(main_bulk>0)
+			VAES_ctr_encrypt_blks<10, 32>(data, main_bulk, aes.rd_key, counter_backup);
+		AES_ecb_encrypt_blks(data+ main_bulk, remainder, &aes);
 	}
 
 	void random_block(block256 * data, int nblocks=1) {
-        nblocks = nblocks * 2;
-        block128 tmp[nblocks];
-		for (int i = 0; i < nblocks; ++i) {
+		nblocks = nblocks * 2;
+		int remainder = nblocks % 32;
+		//int remainder = nblocks % AES_BATCH_SIZE;
+		int main_bulk = nblocks - remainder;
+		uint64_t counter_backup = counter;
+		counter += main_bulk;
+
+        block128 tmp[remainder];
+		for (int i = 0; i < remainder; ++i) {
 			tmp[i] = makeBlock128(0LL, counter++);
 		}
-		int i = 0;
+		/*int i = 0;
 		for(; i < nblocks-AES_BATCH_SIZE; i+=AES_BATCH_SIZE) {
 			AES_ecb_encrypt_blks(tmp+i, AES_BATCH_SIZE, &aes);
-		}
-		AES_ecb_encrypt_blks(tmp+i, (AES_BATCH_SIZE >  nblocks-i) ? nblocks-i:AES_BATCH_SIZE, &aes);
-		for (int i = 0; i < nblocks/2; ++i) {
+		}*/
+		if (main_bulk > 0)
+			VAES_ctr_encrypt_blks<10, 32>(reinterpret_cast<block128*>(data), main_bulk, aes.rd_key, counter_backup);
+		AES_ecb_encrypt_blks(tmp+ main_bulk, remainder, &aes);
+		for (int i = 0; i < remainder/2; ++i) {
 			data[i] = makeBlock256(tmp[2*i], tmp[2 * i + 1]);
 		}
 	}
@@ -235,29 +252,46 @@ class PRG256 { public:
 	}
 
 	void random_block(block128 * data, int nblocks=1) {
-		for (int i = 0; i < nblocks; ++i) {
+		int remainder = nblocks % 32;
+		//int remainder = nblocks % AES_BATCH_SIZE;
+		int main_bulk = nblocks - remainder;
+		uint64_t counter_backup = counter;
+		counter += main_bulk;
+
+		for (int i = main_bulk; i < nblocks; ++i) {
 			data[i] = makeBlock128(0LL, counter++);
 		}
-		int i = 0;
+		/*int i = 0;
 		for(; i < nblocks-AES_BATCH_SIZE; i+=AES_BATCH_SIZE) {
 			AESNI_ecb_encrypt_blks(data+i, AES_BATCH_SIZE, &aes);
 		}
-		AESNI_ecb_encrypt_blks(data+i, (AES_BATCH_SIZE >  nblocks-i) ? nblocks-i:AES_BATCH_SIZE, &aes);
+		AESNI_ecb_encrypt_blks(data+i, (AES_BATCH_SIZE >  nblocks-i) ? nblocks-i:AES_BATCH_SIZE, &aes);*/
+		if (main_bulk > 0)
+			VAES_ctr_encrypt_blks<14, 32>(data, main_bulk, aes.rk, counter_backup);
+		AESNI_ecb_encrypt_blks(data + main_bulk, remainder, &aes);
 	}
 
 	void random_block(block256 * data, int nblocks=1) {
-        nblocks = nblocks * 2;
-        block128 tmp[nblocks];
-		for (int i = 0; i < nblocks; ++i) {
+		nblocks = nblocks * 2;
+		int remainder = nblocks % 32;
+		//int remainder = nblocks % AES_BATCH_SIZE;
+		int main_bulk = nblocks - remainder;
+		uint64_t counter_backup = counter;
+		counter += main_bulk;
+
+		block128 tmp[remainder];
+		for (int i = 0; i < remainder; ++i) {
 			tmp[i] = makeBlock128(0LL, counter++);
 		}
-		int i = 0;
+		/*int i = 0;
 		for(; i < nblocks-AES_BATCH_SIZE; i+=AES_BATCH_SIZE) {
-			AESNI_ecb_encrypt_blks(tmp+i, AES_BATCH_SIZE, &aes);
-		}
-		AESNI_ecb_encrypt_blks(tmp+i, (AES_BATCH_SIZE >  nblocks-i) ? nblocks-i:AES_BATCH_SIZE, &aes);
-		for (int i = 0; i < nblocks/2; ++i) {
-			data[i] = makeBlock256(tmp[2*i], tmp[2 * i + 1]);
+			AES_ecb_encrypt_blks(tmp+i, AES_BATCH_SIZE, &aes);
+		}*/
+		if (main_bulk > 0)
+			VAES_ctr_encrypt_blks<14, 32>(reinterpret_cast<block128*>(data), main_bulk, aes.rk, counter_backup);
+		AESNI_ecb_encrypt_blks(tmp + main_bulk, remainder, &aes);
+		for (int i = 0; i < remainder / 2; ++i) {
+			data[i] = makeBlock256(tmp[2 * i], tmp[2 * i + 1]);
 		}
 	}
 
